@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]: "[ BREACH PROTOCOL ]"
+    - generic [ref=e4]: // cyberpunk 2077 · minigame solver
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - heading ">> INPUT" [level=2] [ref=e7]
+      - generic [ref=e8]:
+        - button "FORM" [ref=e9] [cursor=pointer]
+        - button "PASTE .TXT" [ref=e10] [cursor=pointer]
+        - button "UPLOAD" [ref=e11] [cursor=pointer]
+        - button "RANDOMIZE" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Buffer size
+          - spinbutton [ref=e16]: "7"
+        - generic [ref=e17]:
+          - generic [ref=e18]: Matrix (rows separated by newline)
+          - textbox [ref=e19]: 7A 55 E9 E9 1C 55 55 7A 1C 7A E9 55 55 1C 1C 55 E9 BD BD 1C 7A 1C 55 BD BD 55 BD 7A 1C 1C 1C 55 55 7A 55 7A
+        - generic [ref=e20]:
+          - generic [ref=e21]: "Sequences (one per line: tokens SPACE reward)"
+          - textbox [ref=e22]: BD E9 1C, 15 BD 7A BD, 20 BD 1C BD 55, 30
+          - generic [ref=e23]:
+            - text: "format:"
+            - code [ref=e24]: BD E9 1C, 15
+            - text: — tokens then a comma then the reward
+      - generic [ref=e25]:
+        - button ">> BREACH" [ref=e26] [cursor=pointer]
+        - button "RESET" [ref=e27] [cursor=pointer]
+  - contentinfo [ref=e29]:
+    - generic [ref=e30]: 13522140 · Yasmin Farisah Salma
+    - generic [ref=e31]: IF2211 Strategi Algoritma

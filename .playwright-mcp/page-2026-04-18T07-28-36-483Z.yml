@@ -1,0 +1,123 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]: "[ BREACH PROTOCOL ]"
+    - generic [ref=e4]: // cyberpunk 2077 · minigame solver
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - heading ">> INPUT" [level=2] [ref=e7]
+      - generic [ref=e8]:
+        - button "FORM" [ref=e9] [cursor=pointer]
+        - button "PASTE .TXT" [ref=e10] [cursor=pointer]
+        - button "UPLOAD" [ref=e11] [cursor=pointer]
+        - button "RANDOMIZE" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Buffer size
+          - spinbutton [ref=e16]: "7"
+        - generic [ref=e17]:
+          - generic [ref=e18]: Matrix (rows separated by newline)
+          - textbox [ref=e19]: 7A 55 E9 E9 1C 55 55 7A 1C 7A E9 55 55 1C 1C 55 E9 BD BD 1C 7A 1C 55 BD BD 55 BD 7A 1C 1C 1C 55 55 7A 55 7A
+        - generic [ref=e20]:
+          - generic [ref=e21]: "Sequences (one per line: tokens SPACE reward)"
+          - textbox [ref=e22]: BD E9 1C, 15 BD 7A BD, 20 BD 1C BD 55, 30
+          - generic [ref=e23]:
+            - text: "format:"
+            - code [ref=e24]: BD E9 1C, 15
+            - text: — tokens then a comma then the reward
+      - generic [ref=e25]:
+        - button ">> BREACH" [active] [ref=e26] [cursor=pointer]
+        - button "RESET" [ref=e27] [cursor=pointer]
+    - generic [ref=e32]:
+      - heading ">> OUTPUT" [level=2] [ref=e33]
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]: REWARD
+          - generic [ref=e37]: "50"
+        - generic [ref=e38]:
+          - generic [ref=e39]: TIME
+          - generic [ref=e40]: 13.4 ms
+        - generic [ref=e41]:
+          - generic [ref=e42]: BUFFER
+          - generic [ref=e43]: 7/7
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - heading "MATRIX" [level=3] [ref=e46]
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - generic [ref=e49]: "1"
+              - generic [ref=e50]: 7A
+            - generic [ref=e52]: "55"
+            - generic [ref=e54]: E9
+            - generic [ref=e56]: E9
+            - generic [ref=e58]: 1C
+            - generic [ref=e60]: "55"
+            - generic [ref=e62]: "55"
+            - generic [ref=e64]: 7A
+            - generic [ref=e66]: 1C
+            - generic [ref=e68]: 7A
+            - generic [ref=e70]: E9
+            - generic [ref=e72]: "55"
+            - generic [ref=e73]:
+              - generic [ref=e74]: "7"
+              - generic [ref=e75]: "55"
+            - generic [ref=e77]: 1C
+            - generic [ref=e79]: 1C
+            - generic [ref=e81]: "55"
+            - generic [ref=e83]: E9
+            - generic [ref=e84]:
+              - generic [ref=e85]: "6"
+              - generic [ref=e86]: BD
+            - generic [ref=e87]:
+              - generic [ref=e88]: "2"
+              - generic [ref=e89]: BD
+            - generic [ref=e91]: 1C
+            - generic [ref=e92]:
+              - generic [ref=e93]: "3"
+              - generic [ref=e94]: 7A
+            - generic [ref=e96]: 1C
+            - generic [ref=e98]: "55"
+            - generic [ref=e100]: BD
+            - generic [ref=e102]: BD
+            - generic [ref=e104]: "55"
+            - generic [ref=e105]:
+              - generic [ref=e106]: "4"
+              - generic [ref=e107]: BD
+            - generic [ref=e109]: 7A
+            - generic [ref=e111]: 1C
+            - generic [ref=e112]:
+              - generic [ref=e113]: "5"
+              - generic [ref=e114]: 1C
+            - generic [ref=e116]: 1C
+            - generic [ref=e118]: "55"
+            - generic [ref=e120]: "55"
+            - generic [ref=e122]: 7A
+            - generic [ref=e124]: "55"
+            - generic [ref=e126]: 7A
+        - generic [ref=e127]:
+          - heading "BUFFER" [level=3] [ref=e128]
+          - generic [ref=e129]:
+            - generic [ref=e130]: 7A
+            - generic [ref=e131]: BD
+            - generic [ref=e132]: 7A
+            - generic [ref=e133]: BD
+            - generic [ref=e134]: 1C
+            - generic [ref=e135]: BD
+            - generic [ref=e136]: "55"
+          - heading "SEQUENCES" [level=3] [ref=e137]
+          - generic [ref=e138]:
+            - generic [ref=e139]:
+              - generic [ref=e140]: ○
+              - generic [ref=e141]: BD E9 1C
+              - generic [ref=e142]: "+15"
+            - generic [ref=e143]:
+              - generic [ref=e144]: ✓
+              - generic [ref=e145]: BD 7A BD
+              - generic [ref=e146]: "+20"
+            - generic [ref=e147]:
+              - generic [ref=e148]: ✓
+              - generic [ref=e149]: BD 1C BD 55
+              - generic [ref=e150]: "+30"
+      - button ">> DOWNLOAD SOLUTION" [ref=e151] [cursor=pointer]
+  - contentinfo [ref=e29]:
+    - generic [ref=e30]: 13522140 · Yasmin Farisah Salma
+    - generic [ref=e31]: IF2211 Strategi Algoritma

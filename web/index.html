@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Breach Protocol // Solver</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="scanlines"></div>
+
+  <header>
+    <div class="logo">
+      <span class="bracket">[</span>
+      <span class="title">BREACH PROTOCOL</span>
+      <span class="bracket">]</span>
+    </div>
+    <div class="subtitle">// cyberpunk 2077 · minigame solver</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2><span class="marker">&gt;&gt;</span> INPUT</h2>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="form">FORM</button>
+        <button class="tab" data-tab="paste">PASTE .TXT</button>
+        <button class="tab" data-tab="file">UPLOAD</button>
+        <button class="tab" data-tab="random">RANDOMIZE</button>
+      </div>
+
+      <!-- FORM TAB -->
+      <div class="tab-pane active" data-pane="form">
+        <div class="row">
+          <label>Buffer size</label>
+          <input type="number" id="form-buffer" value="7" min="2" />
+        </div>
+        <div class="row">
+          <label>Matrix (rows separated by newline)</label>
+          <textarea id="form-matrix" rows="6" spellcheck="false">7A 55 E9 E9 1C 55
+55 7A 1C 7A E9 55
+55 1C 1C 55 E9 BD
+BD 1C 7A 1C 55 BD
+BD 55 BD 7A 1C 1C
+1C 55 55 7A 55 7A</textarea>
+        </div>
+        <div class="row">
+          <label>Sequences (one per line: tokens SPACE reward)</label>
+          <textarea id="form-seqs" rows="4" spellcheck="false">BD E9 1C, 15
+BD 7A BD, 20
+BD 1C BD 55, 30</textarea>
+          <div class="hint">format: <code>BD E9 1C, 15</code> — tokens then a comma then the reward</div>
+        </div>
+      </div>
+
+      <!-- PASTE TAB -->
+      <div class="tab-pane" data-pane="paste">
+        <label>Paste raw .txt content (same format as inputs/file1.txt):</label>
+        <textarea id="paste-raw" rows="14" spellcheck="false"></textarea>
+        <div class="hint">Format: buffer / rows cols / matrix / num_seqs / (seq + reward) x N</div>
+      </div>
+
+      <!-- FILE TAB -->
+      <div class="tab-pane" data-pane="file">
+        <label>Upload a .txt file:</label>
+        <input type="file" id="file-input" accept=".txt" />
+        <div class="hint" id="file-status">No file selected.</div>
+      </div>
+
+      <!-- RANDOM TAB -->
+      <div class="tab-pane" data-pane="random">
+        <div class="row">
+          <label>Unique tokens (space separated)</label>
+          <input type="text" id="rnd-tokens" value="BD 1C 55 E9 7A F3" />
+        </div>
+        <div class="grid2">
+          <div class="row">
+            <label>Buffer size</label>
+            <input type="number" id="rnd-buffer" value="7" min="2" />
+          </div>
+          <div class="row">
+            <label>Matrix (w × h)</label>
+            <div class="inline">
+              <input type="number" id="rnd-w" value="6" min="2" />
+              <span>×</span>
+              <input type="number" id="rnd-h" value="6" min="2" />
+            </div>
+          </div>
+          <div class="row">
+            <label># sequences</label>
+            <input type="number" id="rnd-nseq" value="3" min="1" />
+          </div>
+          <div class="row">
+            <label>Max tokens / seq</label>
+            <input type="number" id="rnd-maxlen" value="4" min="2" />
+          </div>
+        </div>
+        <button class="btn secondary" id="rnd-generate">&gt;&gt; Generate</button>
+        <div class="hint" id="rnd-status"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="solve-btn">&gt;&gt; BREACH</button>
+        <button class="btn" id="reset-btn">RESET</button>
+      </div>
+      <div class="error" id="error-box"></div>
+    </section>
+
+    <section class="panel" id="output-panel" hidden>
+      <h2><span class="marker">&gt;&gt;</span> OUTPUT</h2>
+      <div class="stats">
+        <div><span class="stat-label">REWARD</span><span class="stat-value" id="out-reward">—</span></div>
+        <div><span class="stat-label">TIME</span><span class="stat-value" id="out-time">—</span></div>
+        <div><span class="stat-label">BUFFER</span><span class="stat-value" id="out-buffer">—</span></div>
+      </div>
+
+      <div class="split">
+        <div>
+          <h3>MATRIX</h3>
+          <div id="matrix-view" class="matrix"></div>
+        </div>
+        <div>
+          <h3>BUFFER</h3>
+          <div id="buffer-view" class="buffer"></div>
+          <h3>SEQUENCES</h3>
+          <div id="seq-view" class="seqs"></div>
+        </div>
+      </div>
+
+      <button class="btn" id="download-btn">&gt;&gt; DOWNLOAD SOLUTION</button>
+    </section>
+  </main>
+
+  <footer>
+    <div>13522140 · Yasmin Farisah Salma</div>
+    <div>IF2211 Strategi Algoritma</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

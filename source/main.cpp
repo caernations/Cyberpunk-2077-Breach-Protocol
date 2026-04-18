@@ -2,589 +2,441 @@
 // NAMA : Yasmin Farisah Salma
 // NIM  : 13522140
 
-#include <iostream> // I/O operations
-#include <vector>   // dynamic arrays to store matrix & paths
-#include <string>   // string class
-#include <sstream>  // sequence generator
-#include <map>      // mapping sequence to its reward
-#include <fstream>  // file I/O
-#include <random>   // randomized inputs
-#include <chrono>   // duration
-#include <cstdlib>  // system()
-#include <set>      // for storing unique sequences
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <map>
+#include <fstream>
+#include <random>
+#include <chrono>
+#include <set>
+#include <limits>
+#include <climits>
+#include <cctype>
 using namespace std;
 
-// ---------- GLOBAL VARIABLES
-int n, m, u, numOfSequences;      // n = rows, m = buffer size, u = column
-int maxReward = INT_MIN;          // global variable to track the maximum reward found
-vector<int> maxRewardPath;        // store the path of maximum reward
-vector<vector<int>> allPaths;     // store all the possible paths
-vector<vector<string>> matrix;    // matrix to store strings
-map<string, int> sequenceRewards; // mapping sequence to its reward
+// ---------- GLOBAL STATE
+int n, m, u, numOfSequences;      // n = rows, m = buffer size, u = cols
+int maxReward = INT_MIN;
+vector<int> maxRewardPath;
+vector<vector<string>> matrix;
+map<string, int> sequenceRewards;
 
-// ---------- MAIN FUNCTIONS
-// FUNCTION: To enter the inputs manually
+// ---------- HELPERS
+static bool isValidToken(const string &t)
+{
+    if (t.size() != 2)
+        return false;
+    for (char c : t)
+    {
+        if (!isalnum(static_cast<unsigned char>(c)))
+            return false;
+        if (isalpha(static_cast<unsigned char>(c)) && !isupper(static_cast<unsigned char>(c)))
+            return false;
+    }
+    return true;
+}
+
+static bool isValidSequence(const string &line, vector<string> &out)
+{
+    istringstream iss(line);
+    string tok;
+    out.clear();
+    while (iss >> tok)
+    {
+        if (!isValidToken(tok))
+            return false;
+        out.push_back(tok);
+    }
+    return !out.empty();
+}
+
+static int readPositiveInt(const string &prompt, int minVal = 1)
+{
+    int v;
+    while (true)
+    {
+        cout << prompt;
+        if (cin >> v && v >= minVal)
+        {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return v;
+        }
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "!! Invalid. Must be an integer >= " << minVal << ".\n";
+    }
+}
+
+// ---------- INPUT MODES
 void manualInput()
 {
-    cout << "\n   === MANUAL INPUT ===\n\n"
-         << ">> Buffer size\t\t\t: ";
-    cin >> m;
+    cout << "\n=== MANUAL INPUT ===\n";
+    m = readPositiveInt(">> Buffer size: ");
 
-    int width, height;
-    cout << ">> Matrix dimension (w h)\t: ";
-    cin >> width >> height;
+    cout << ">> Matrix dimension (width height): ";
+    while (!(cin >> u >> n) || u < 1 || n < 1)
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "!! Invalid. Enter two positive integers, e.g. 6 6: ";
+    }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    // adjusting to the global variables
-    u = width;
-    n = height;
-
-    matrix.resize(n, vector<string>(u));
-    vector<vector<bool>> visited(n, vector<bool>(u, false));
-    cout << ">> Matrix elements\t\t:\n";
+    matrix.assign(n, vector<string>(u));
+    cout << ">> Matrix elements (" << n << " rows x " << u << " tokens):\n";
     for (int i = 0; i < n; ++i)
     {
         for (int j = 0; j < u; ++j)
         {
-            cin >> matrix[i][j];
+            while (true)
+            {
+                if (!(cin >> matrix[i][j]))
+                {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "!! Read error. Re-enter: ";
+                    continue;
+                }
+                if (!isValidToken(matrix[i][j]))
+                {
+                    cout << "!! Token must be 2 uppercase-alphanumeric chars. Re-enter: ";
+                    continue;
+                }
+                break;
+            }
         }
     }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    cout << "\n>> Number of sequences\t\t: ";
-    cin >> numOfSequences;
-    cin.ignore();
+    numOfSequences = readPositiveInt(">> Number of sequences: ");
 
-    set<string> uniqueSequences; // store unique sequences using set
+    set<string> seen;
     for (int i = 1; i <= numOfSequences; ++i)
     {
-        string sequence;
-        int reward;
-        bool validInput = false;
-
-        while (!validInput)
+        string line;
+        vector<string> toks;
+        while (true)
         {
-            cout << ">> Sequence " << i << "\t\t\t: ";
-            getline(cin, sequence);
-            // make sure the sequence is unique
-            if (uniqueSequences.find(sequence) != uniqueSequences.end())
+            cout << ">> Sequence " << i << " (tokens separated by space): ";
+            getline(cin, line);
+            if (!isValidSequence(line, toks))
             {
-                cout << "!! This sequence already exist.\n!! Please enter a different sequence." << endl;
-                system("pause");
+                cout << "!! Invalid tokens. Try again.\n";
                 continue;
             }
-
-            istringstream iss(sequence);
-            string token;
-            validInput = true;
-
-            // validate tokens (alphanumeric & capital letters)
-            while (iss >> token)
+            if (toks.size() < 2)
             {
-                if (token.size() != 2 || !isalnum(token[0]) || !isalnum(token[1]) ||
-                    (isalpha(token[0]) && !isupper(token[0])) || (isalpha(token[1]) && !isupper(token[1])))
-                {
-                    validInput = false;
-                    cout << "!! Each token must consist of exactly 2 alphanumeric & in uppercase.\n!! Please re-enter sequence " << i << "! " << endl;
-                    break;
-                }
+                cout << "!! Sequence must have at least 2 tokens.\n";
+                continue;
             }
+            string canon;
+            for (size_t k = 0; k < toks.size(); ++k)
+            {
+                if (k) canon += ' ';
+                canon += toks[k];
+            }
+            if (seen.count(canon))
+            {
+                cout << "!! Duplicate sequence. Try again.\n";
+                continue;
+            }
+            line = canon;
+            seen.insert(canon);
+            break;
         }
-
-        if (validInput)
-        {
-            cout << ">> Sequence " << i << " reward\t\t: ";
-            cin >> reward;
-            cin.ignore();
-            sequenceRewards[sequence] = reward;
-            uniqueSequences.insert(sequence);
-        }
+        int reward = readPositiveInt(">> Reward for sequence " + to_string(i) + ": ");
+        sequenceRewards[line] = reward;
     }
 }
 
-// FUNCTION: To randomized the inputs
 void randomizedInput()
 {
-    int jumlah_token_unik, ukuran_buffer, ukuran_matriks_x, ukuran_matriks_y, jumlah_sekuens, ukuran_maksimal_sekuens;
-
-    cout << "\n   === RANDOMIZED INPUT ===\n\n"
-         << ">> Number of unique tokens\t: ";
-    cin >> jumlah_token_unik;
-
-    if (jumlah_token_unik <= 0) // error handling
-    {
-        cerr << "!! Number of unique tokens must be positive." << endl;
-        return;
-    }
+    cout << "\n=== RANDOMIZED INPUT ===\n";
+    int numTokens = readPositiveInt(">> Number of unique tokens: ");
 
     vector<string> tokens;
-    tokens.reserve(jumlah_token_unik);
-    cout << ">> Tokens (must be unique)\t: ";
-    // validate tokens (alphanumeric & capital letters)
-    for (int i = 0; i < jumlah_token_unik; ++i)
+    tokens.reserve(numTokens);
+    set<string> tokenSet;
+    cout << ">> Enter " << numTokens << " unique tokens (e.g. BD 1C 55 ...):\n>> ";
+    for (int i = 0; i < numTokens; ++i)
     {
-        string token;
+        string t;
         while (true)
         {
-            cin >> token;
-            if (token.size() != 2 || !isalnum(token[0]) || !isalnum(token[1]) ||
-                (isalpha(token[0]) && !isupper(token[0])) || (isalpha(token[1]) && !isupper(token[1])))
+            if (!(cin >> t))
             {
-                cout << "!! Invalid token.\n>> Please re-enter token\t: ";
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "!! Read error. Re-enter token " << (i + 1) << ": ";
                 continue;
             }
-
-            tokens.push_back(token);
+            if (!isValidToken(t))
+            {
+                cout << "!! Invalid token. Re-enter: ";
+                continue;
+            }
+            if (tokenSet.count(t))
+            {
+                cout << "!! Duplicate. Re-enter: ";
+                continue;
+            }
+            tokens.push_back(t);
+            tokenSet.insert(t);
             break;
         }
     }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    cout << ">> Buffer size\t\t\t: ";
-    cin >> ukuran_buffer;
-    cout << ">> Matrix dimension (w h)\t: ";
-    cin >> ukuran_matriks_x >> ukuran_matriks_y;
-    cout << ">> Number of sequences\t\t: ";
-    cin >> jumlah_sekuens;
-    cout << ">> Maximum tokens in sequences\t: ";
-    cin >> ukuran_maksimal_sekuens;
-    if (ukuran_maksimal_sekuens < 2)
-        ukuran_maksimal_sekuens = 2;
+    m = readPositiveInt(">> Buffer size: ");
+
+    cout << ">> Matrix dimension (width height): ";
+    while (!(cin >> u >> n) || u < 1 || n < 1)
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "!! Invalid. Enter two positive integers: ";
+    }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    int jumlah_sekuens = readPositiveInt(">> Number of sequences: ");
+    int max_seq_len = readPositiveInt(">> Maximum tokens per sequence (>=2): ", 2);
 
     random_device rd;
     mt19937 gen(rd());
 
-    n = ukuran_matriks_y;
-    u = ukuran_matriks_x;
-    m = ukuran_buffer;
-    matrix.resize(n, vector<string>(u));
+    matrix.assign(n, vector<string>(u));
     for (int i = 0; i < n; ++i)
-    {
         for (int j = 0; j < u; ++j)
-        {
-            matrix[i][j] = tokens[gen() % jumlah_token_unik];
-        }
-    }
+            matrix[i][j] = tokens[gen() % numTokens];
 
     set<string> uniqueSequences;
     sequenceRewards.clear();
     for (int i = 0; i < jumlah_sekuens; ++i)
     {
-        stringstream sequence;
         string seqStr;
-        bool uniqueSequenceFound = false;
-
-        while (!uniqueSequenceFound)
+        while (true)
         {
-            sequence.str("");
-            int sequenceLength = gen() % (ukuran_maksimal_sekuens - 1) + 2; // make sure that a sequence at least contains 2 tokens
-
-            for (int j = 0; j < sequenceLength; ++j)
+            stringstream ss;
+            int len = (max_seq_len == 2) ? 2 : (gen() % (max_seq_len - 1) + 2);
+            for (int j = 0; j < len; ++j)
             {
-                if (j > 0)
-                    sequence << " ";
-                sequence << tokens[gen() % jumlah_token_unik];
+                if (j) ss << ' ';
+                ss << tokens[gen() % numTokens];
             }
-            seqStr = sequence.str();
-
-            if (uniqueSequences.find(seqStr) == uniqueSequences.end())
+            seqStr = ss.str();
+            if (!uniqueSequences.count(seqStr))
             {
-                uniqueSequenceFound = true;
                 uniqueSequences.insert(seqStr);
-                int reward = gen() % 100 + 1;
-                sequenceRewards[seqStr] = reward;
+                sequenceRewards[seqStr] = gen() % 100 + 1;
+                break;
             }
         }
     }
 
-    cout << "\n\n   === RESULT: ===\n\n";
-    cout << ukuran_buffer << "\n"
-         << ukuran_matriks_x << " " << ukuran_matriks_y << "\n";
+    cout << "\n--- Generated input ---\n";
+    cout << m << "\n" << u << " " << n << "\n";
     for (const auto &row : matrix)
     {
-        for (const auto &elem : row)
-        {
-            cout << elem << " ";
-        }
+        for (const auto &e : row) cout << e << " ";
         cout << "\n";
     }
     cout << sequenceRewards.size() << "\n";
-    for (const auto &seq : sequenceRewards)
-    {
-        cout << seq.first << "\n"
-             << seq.second << "\n";
-    }
-
-    char proceed;
-    cout << "\n   === CONFIRM INPUT ===\n"
-         << ">> Proceed with this input? (y/n)"
-         << ">> ";
-    cin >> proceed;
-    system("pause");
-
-    if (proceed == 'n' || proceed == 'N')
-    {
-        exit(0);
-    }
+    for (const auto &s : sequenceRewards)
+        cout << s.first << "\n" << s.second << "\n";
+    cout << "-----------------------\n";
 }
 
-// FUNCTION: To read inputs from a .txt file in inputs folder
 void fileInput()
 {
+    cout << "\n=== FILE INPUT ===\n";
     ifstream inputFile;
-    string filename;
-    string filePath;
+    string filename, filePath;
 
     while (true)
     {
-        cout << "\n   === FILE INPUT ===\n\n"
-             << ">> .txt filename (without extension)\t: ";
-        cin >> filename;
-        filePath = "../inputs/" + filename + ".txt"; // make sure that it's a .txt file
-
+        cout << ">> Filename in inputs/ (without .txt extension): ";
+        if (!(cin >> filename))
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+        filePath = "../inputs/" + filename + ".txt";
         inputFile.open(filePath);
-        if (inputFile.is_open())
-        {
-            break;
-        }
-        else
-        {
-            cerr << "File not found: " << filePath << ". Please try again." << endl;
-            system("pause");
-            system("cls");
-        }
+        if (inputFile.is_open()) break;
+        cout << "!! File not found: " << filePath << ". Try again.\n";
     }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    inputFile >> m;      // buffer size
-    inputFile >> n >> u; // matrix dimension
-    matrix.resize(n, vector<string>(u));
-
-    // matrix elements
+    inputFile >> m;
+    inputFile >> n >> u;
+    matrix.assign(n, vector<string>(u));
     for (int i = 0; i < n; ++i)
-    {
         for (int j = 0; j < u; ++j)
-        {
             inputFile >> matrix[i][j];
-        }
-    }
 
-    // number of sequences
     inputFile >> numOfSequences;
     inputFile.ignore();
-
-    // sequences and & rewards
     for (int i = 0; i < numOfSequences; ++i)
     {
         string sequence;
         int reward;
-        getline(inputFile, sequence); // sequence
-        inputFile >> reward;          // reward
+        getline(inputFile, sequence);
+        inputFile >> reward;
         inputFile.ignore();
         sequenceRewards[sequence] = reward;
     }
-
     inputFile.close();
 }
 
-// FUNCTION: To calculate rewards in every path
+// ---------- SOLVER
 int calculateReward(const vector<int> &path)
 {
     string pathStr;
-    for (int num : path)
+    for (int idx : path)
     {
-        if (!pathStr.empty())
-            pathStr += " ";
-        pathStr += matrix[num / u][num % u];
+        if (!pathStr.empty()) pathStr += ' ';
+        pathStr += matrix[idx / u][idx % u];
     }
-
-    int totalReward = 0;
-    for (const auto &seqReward : sequenceRewards)
-    {
-        if (pathStr.find(seqReward.first) != string::npos)
-        {
-            totalReward += seqReward.second;
-        }
-    }
-    return totalReward;
+    int total = 0;
+    for (const auto &sr : sequenceRewards)
+        if (pathStr.find(sr.first) != string::npos)
+            total += sr.second;
+    return total;
 }
 
-// FUNCTION: To store every path
-void storePath(const vector<int> &path)
-{
-    allPaths.push_back(path);
-}
-
-// FUNCTION: To print the optimum path, its reward, and its coordinates
-void printPath(const vector<int> &path, bool printReward = true)
-{
-    int reward = calculateReward(path);
-    if (printReward)
-    {
-        cout << endl;
-        cout << endl;
-        cout << "   === RESULT: ===\n\n";
-        cout << reward; // print total reward
-    }
-    cout << endl;
-    for (int num : path)
-    {
-        int x = num / u;
-        int y = num % u;
-        cout << matrix[x][y] << " ";
-    }
-
-    // print tokens coordinates
-    cout << endl;
-    for (int num : path)
-    {
-        int x = num / u;
-        int y = num % u;
-        cout << y + 1 << ", " << x + 1 << endl;
-    }
-}
-
-// FUNCTION: to validate a coordinate whether it's in range & hasn't been visited yet in the current path
-bool isValid(int x, int y, vector<vector<bool>> &visited)
+bool isValid(int x, int y, const vector<vector<bool>> &visited)
 {
     return x >= 0 && x < n && y >= 0 && y < u && !visited[x][y];
 }
 
-// FUNCTION: brute force algorithm to find all the possible paths & rewards
 void findPaths(int x, int y, vector<int> &path, vector<vector<bool>> &visited, bool horizontal)
 {
     visited[x][y] = true;
     path.push_back(x * u + y);
 
-    if (path.size() == m)
+    if ((int)path.size() == m)
     {
-        int currentReward = calculateReward(path);
-        if (currentReward > maxReward || maxRewardPath.empty())
+        int r = calculateReward(path);
+        if (r > maxReward || maxRewardPath.empty())
         {
-            maxReward = currentReward;
+            maxReward = r;
             maxRewardPath = path;
         }
-        storePath(path);
+    }
+    else if (!horizontal)
+    {
+        for (int i = 0; i < n; ++i)
+            if (i != x && isValid(i, y, visited))
+                findPaths(i, y, path, visited, true);
     }
     else
     {
-        if (!horizontal)
-        {
-            // move vertically down
-            for (int i = x + 1; i < n; ++i)
-            {
-                if (isValid(i, y, visited))
-                {
-                    findPaths(i, y, path, visited, !horizontal);
-                }
-            }
-            // move vertically up
-            for (int i = x - 1; i >= 0; --i)
-            {
-                if (isValid(i, y, visited))
-                {
-                    findPaths(i, y, path, visited, !horizontal);
-                }
-            }
-        }
-        else
-        {
-            // move horizontally right & left
-            for (int j = 0; j < u; ++j)
-            {
-                if (j != y && isValid(x, j, visited))
-                {
-                    findPaths(x, j, path, visited, !horizontal);
-                }
-            }
-        }
+        for (int j = 0; j < u; ++j)
+            if (j != y && isValid(x, j, visited))
+                findPaths(x, j, path, visited, false);
     }
 
     visited[x][y] = false;
     path.pop_back();
 }
 
-// FUNCTION: Save the optimum path to a file with the specified format, asking user for file name
-void saveOptimumPath(const vector<int> &path, const long long executionTime)
+void printPath(const vector<int> &path)
 {
-    string fileName;
-    cout << ">> Filename (without extension): ";
-    cin >> fileName;
-    fileName = "../test/" + fileName + ".txt";
-
-    ofstream file(fileName);
-    if (!file.is_open())
-    {
-        cerr << "Failed to open file for writing." << endl;
-        return;
-    }
-
-    int reward = calculateReward(path);
-    file << reward << "\n";
-
-    for (int num : path)
-    {
-        file << matrix[num / u][num % u] << " ";
-    }
-    file << "\n";
-
-    for (int num : path)
-    {
-        int x = num / u;
-        int y = num % u;
-        file << y + 1 << ", " << x + 1 << "\n";
-    }
-
-    file << executionTime << " ms\n";
-
-    file.close();
-    cout << ">> Saved to " << fileName << endl;
+    cout << "\n=== RESULT ===\n";
+    cout << "Reward: " << calculateReward(path) << "\n";
+    cout << "Path  : ";
+    for (int idx : path) cout << matrix[idx / u][idx % u] << " ";
+    cout << "\nCoords:\n";
+    for (int idx : path)
+        cout << "  " << (idx % u) + 1 << ", " << (idx / u) + 1 << "\n";
 }
 
-// ---------- DEBUGGING FUNCTIONS
-// FUNCTION: to print all the possible paths based on inputs
-void printAllPaths()
+void saveSolution(const vector<int> &path, long long execMs)
 {
-    cout << "All possible paths:\n";
-    for (const auto &path : allPaths)
+    string name;
+    cout << ">> Save as filename (without .txt, will be written to test/): ";
+    cin >> name;
+    string fp = "../test/" + name + ".txt";
+    ofstream f(fp);
+    if (!f.is_open())
     {
-        for (int num : path)
-        {
-            int x = num / u;
-            int y = num % u;
-            cout << matrix[x][y] << " ";
-        }
-        int reward = calculateReward(path);
-        cout << "= " << reward << endl;
-    }
-}
-
-// FUNCTION: to save all the possible paths based on inputs
-void saveAllPathsToFile()
-{
-    string fileName;
-    cout << ">> Filename (without extension): ";
-    cin >> fileName;
-    fileName = "../test/" + fileName + ".txt";
-    ofstream file(fileName);
-    if (!file.is_open())
-    {
-        cout << "Failed to open file for writing." << endl;
+        cerr << "!! Could not write " << fp << "\n";
         return;
     }
-
-    for (const auto &path : allPaths)
-    {
-        for (int num : path)
-        {
-            file << matrix[num / u][num % u] << " ";
-        }
-        int reward = calculateReward(path);
-        file << "= " << reward << endl;
-    }
-
-    file.close();
-    cout << "All paths saved to " << fileName << endl;
+    f << calculateReward(path) << "\n";
+    for (int idx : path) f << matrix[idx / u][idx % u] << " ";
+    f << "\n";
+    for (int idx : path)
+        f << (idx % u) + 1 << ", " << (idx / u) + 1 << "\n";
+    f << execMs << " ms\n";
+    f.close();
+    cout << ">> Saved to " << fp << "\n";
 }
 
 int main()
 {
     using namespace std::chrono;
 
-    int inputType;
-    bool validInput = false;
+    cout << "\n=== CYBERPUNK 2077 BREACH PROTOCOL ===\n"
+         << "Tugas Kecil 1 IF2211 Strategi Algoritma | 13522140, Yasmin Farisah Salma\n\n";
 
-    while (!validInput)
+    int choice = 0;
+    while (true)
     {
-        cout << "\n   === CYBERPUNK 2077 BREACH PROTOCOL===\n"
-             << "___________________________________________\n"
-             << "|                                          |\n"
-             << "| Tugas Kecil 1 IF2211 Strategi Algoritma  |\n"
-             << "| 2024 | 13522140, Yasmin Farisah Salma    |\n"
-             << "|__________________________________________|\n\n"
-             << "=== CHOOSE INPUT TYPE ===\n"
-             << "  1. Manual input\n"
-             << "  2. Randomized input\n"
-             << "  3. File input\n"
-             << "  4. Exit\n\n"
-             << "Enter your choice (1-4): ";
-        cin >> inputType;
-        system("pause");
-        system("cls");
-
-        if (cin.fail())
+        cout << "Input mode:\n"
+             << "  1. Manual\n"
+             << "  2. Randomized\n"
+             << "  3. File (from inputs/)\n"
+             << "  4. Exit\n"
+             << ">> Choice: ";
+        if (!(cin >> choice))
         {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "\n>> Invalid input.\n>>Please enter a number between 1 and 4." << endl;
+            cout << "!! Enter 1-4.\n\n";
             continue;
         }
-
-        cin.ignore();
-
-        switch (inputType)
-        {
-        case 1:
-            manualInput();
-            validInput = true;
-            break;
-        case 2:
-            randomizedInput();
-            validInput = true;
-            break;
-        case 3:
-            fileInput();
-            validInput = true;
-            break;
-        case 4:
-            cout << ">> Exiting program." << endl;
-            return 0;
-        default:
-            cout << "\n>> Invalid choice.\n>>Please enter a number between 1 and 4." << endl;
-        }
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        if (choice >= 1 && choice <= 4) break;
+        cout << "!! Enter 1-4.\n\n";
     }
 
-    // start timing after all inputs are done
-    auto start = high_resolution_clock::now();
+    switch (choice)
+    {
+    case 1: manualInput(); break;
+    case 2: randomizedInput(); break;
+    case 3: fileInput(); break;
+    case 4: cout << ">> Bye.\n"; return 0;
+    }
 
+    auto start = high_resolution_clock::now();
     vector<vector<bool>> visited(n, vector<bool>(u, false));
     for (int i = 0; i < u; ++i)
     {
         vector<int> path;
         findPaths(0, i, path, visited, false);
     }
-
-    // printAllPaths();
-
-    // print and save the optimum path
-    if (!maxRewardPath.empty())
-    {
-        printPath(maxRewardPath); // prints the path, reward, and coordinates
-    }
-    else
-    {
-        cout << ">> No paths found.\n";
-    }
-
-    // stop timing after printing the coordinates
     auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(stop - start);
-    cout << endl;
-    cout << duration.count() << " ms\n";
+    auto durMs = duration_cast<milliseconds>(stop - start).count();
 
-    char saveSolution;
-    cout << endl;
-    cout << endl;
-    cout << "   === SAVE ===\n\n"
-         << "Do you want to save the solution? (y/n)\n"
-         //  << "Do you want to save all the paths? (y/n)\n"
-         << ">> ";
-    cin >> saveSolution;
-    if (saveSolution == 'y' || saveSolution == 'Y')
+    if (maxRewardPath.empty())
     {
-        saveOptimumPath(maxRewardPath, duration.count());
-        // saveAllPathsToFile();
+        cout << "\n>> No paths found.\n";
+        return 0;
     }
+    printPath(maxRewardPath);
+    cout << "Time  : " << durMs << " ms\n";
+
+    cout << "\n>> Save solution? (y/n): ";
+    char ans;
+    cin >> ans;
+    if (ans == 'y' || ans == 'Y')
+        saveSolution(maxRewardPath, durMs);
     else
-    {
-        cout << ">> Solution's not saved." << endl;
-    }
+        cout << ">> Not saved.\n";
 
     return 0;
 }
